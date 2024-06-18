@@ -5,6 +5,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium import webdriver
 import time
 
+# Kovalev Stepan author
+
 # Инициализация драйвера
 browser = webdriver.Chrome()
 
