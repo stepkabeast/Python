@@ -7,6 +7,10 @@ import time
 from urllib.request import urlopen
 import os
 import ffmpeg
+import markdown2
+from datetime import datetime
+from fpdf import FPDF
+
 
 def get_tiktok_video_id(url):
     match = re.search(r'/video/(\d+)', url)
@@ -104,7 +108,7 @@ def download_video(link, id):
     videoTitle = downloadSoup.find("p").getText().strip()
     sanitizedTitle = sanitize_filename(videoTitle)
 
-    print("STEP 5: Saving the video :)")
+    print("STEP 5: Saving the video")
     os.makedirs("videos", exist_ok=True)
     mp4File = urlopen(downloadLink)
     temp_file = f"videos/temp-{id}.mp4"
@@ -120,17 +124,43 @@ def download_video(link, id):
     process_video(temp_file, output_file)
     os.remove(temp_file)
 
+
+def generate_report(start_time, number_of_videos):
+    end_time = datetime.now()
+    total_time = end_time - start_time
+    report_content = f"""
+# Отчет о обработке видео
+
+**Время начала:** {start_time}
+
+**Время окончания:** {end_time}
+
+**Общее время:** {total_time}
+
+**Количество обработанных видео:** {number_of_videos}
+
+"""
+
+    with open("report.md", "w", encoding="utf-8") as report_file:
+        report_file.write(report_content)
+
+    # Конвертация в PDF
+    # pdf = FPDF()
+    # pdf.add_page()
+    # pdf.set_auto_page_break(auto=True, margin=15)
+    # pdf.set_font("Arial", size=12)
+    # for line in report_content.split('\n'):
+    #     pdf.multi_cell(0, 10, line)
+    # pdf.output("report.pdf")
+
+start_time = datetime.now()
 print("STEP 1: Open Chrome browser")
 options = Options()
 options.add_argument("start-maximized")
 options.add_argument("--disable-blink-features=AutomationControlled")
 options.add_experimental_option("excludeSwitches", ["enable-automation"])
 driver = webdriver.Chrome(options=options)
-# Измените ссылку TikTok
 driver.get("https://www.tiktok.com/@russian_lesson")
-
-# Если вы получаете CAPTCHA TikTok, измените здесь TIMEOUT
-# на 60 секунд, достаточно времени для того, чтобы вы могли выполнить CAPTCHA самостоятельно.
 time.sleep(1)
 
 scroll_pause_time = 1
@@ -146,7 +176,6 @@ while True:
     if (screen_height) * i > scroll_height:
         break
 
-print("STEP 2.5")
 className = "css-x6y88p-DivItemContainerV2 e19c29qe8"
 
 script = """
@@ -167,3 +196,8 @@ for index, url in enumerate(urlsToDownload):
     print(f"Downloading video: {index}")
     download_video(url, index)
     time.sleep(10)
+
+os.remove('videos/temp_audio.aac')
+os.remove('videos/temp_resized.mp4')
+os.remove('videos/temp_slow.mp4')
+generate_report(start_time, len(urlsToDownload))
